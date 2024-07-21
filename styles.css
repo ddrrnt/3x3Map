@@ -1,0 +1,49 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+#mindmap-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-top: 20px;
+}
+
+.node {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 150px;
+    height: 150px;
+    margin: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.node:hover {
+    transform: scale(1.1);
+}
+
+.root {
+    background-color: #e67e22;
+    color: white;
+    font-size: 20px;
+}
+
+.layer1 {
+    background-color: #27ae60;
+    color: white;
+    font-size: 16px;
+}
+
+.layer2 {
+    background-color: #3498db;
+    color: white;
+    font-size: 14px;
+}
+
+.hidden {
+    display: none;
+}
