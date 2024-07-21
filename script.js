@@ -10,9 +10,9 @@ function handleMarkdownInput() {
 
 function parseMarkdownToTree(markdown) {
     const lines = markdown.split('\n');
-    const tree = { name: 'Crafting Effective Questions', children: [] };
+    const tree = { name: '', children: [] };
     let currentParent = tree;
-    let currentLevel = 1;
+    const stack = [tree];
 
     lines.forEach(line => {
         const trimmedLine = line.trim();
@@ -20,31 +20,22 @@ function parseMarkdownToTree(markdown) {
             const level = (trimmedLine.match(/#/g) || []).length;
             const nodeName = trimmedLine.replace(/#/g, '').trim();
             const newNode = { name: nodeName, children: [] };
+
             if (level === 1) {
-                currentParent = tree;
-                currentParent.children.push(newNode);
-            } else if (level === 2) {
-                currentParent = tree.children[tree.children.length - 1];
-                currentParent.children.push(newNode);
-            } else if (level === 3) {
-                const lastParent = currentParent.children[currentParent.children.length - 1];
-                lastParent.children.push(newNode);
+                tree.name = nodeName;
+            } else {
+                while (stack.length >= level) {
+                    stack.pop();
+                }
+                const parent = stack[stack.length - 1];
+                parent.children.push(newNode);
             }
-        } else if (trimmedLine.match(/^\d+\./)) {
-            const nodeName = trimmedLine.replace(/^\d+\./, '').trim();
-            const newNode = { name: nodeName, children: [] };
-            currentParent.children.push(newNode);
-            currentParent = newNode;
-            currentLevel = 2;
-        } else if (trimmedLine.startsWith('-')) {
-            const nodeName = trimmedLine.replace(/^-/, '').trim();
-            const newNode = { name: nodeName, children: [] };
-            if (currentLevel === 2) {
-                currentParent.children.push(newNode);
-            } else if (currentLevel === 3) {
-                const lastParent = currentParent.children[currentParent.children.length - 1];
-                lastParent.children.push(newNode);
-            }
+
+            stack.push(newNode);
+        } else if (trimmedLine.length > 0) {
+            const lastNode = stack[stack.length - 1];
+            const textNode = { name: trimmedLine, children: [] };
+            lastNode.children.push(textNode);
         }
     });
 
