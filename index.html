@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mindmap App - Version 7 (Self-contained)</title>
+    <title>Mindmap App - Version 7 (With PNG Export)</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,8 +19,11 @@
             height: 200px;
             margin-bottom: 20px;
         }
-        #render-button {
+        #render-button, #generate-png {
             margin-bottom: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
         }
         #mindmap-container {
             width: 600px;
@@ -62,6 +66,7 @@
 <body>
     <textarea id="input-area" placeholder="Enter your markdown here..."></textarea>
     <button id="render-button">Render Mindmap</button>
+    <button id="generate-png">Generate PNG</button>
     <div id="mindmap-container"></div>
 
     <script>
@@ -154,11 +159,37 @@
             });
         }
 
+        function generatePNG() {
+            // Store current visibility state
+            const level1Nodes = document.querySelectorAll('.level-1');
+            const level2Nodes = document.querySelectorAll('.level-2');
+            const level1State = Array.from(level1Nodes).map(node => node.style.display);
+            const level2State = Array.from(level2Nodes).map(node => node.style.display);
+
+            // Make all nodes visible
+            level1Nodes.forEach(node => node.style.display = 'flex');
+            level2Nodes.forEach(node => node.style.display = 'flex');
+
+            html2canvas(document.getElementById('mindmap-container')).then(canvas => {
+                const image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+                const link = document.createElement('a');
+                link.download = 'mindmap.png';
+                link.href = image;
+                link.click();
+
+                // Restore original visibility state
+                level1Nodes.forEach((node, index) => node.style.display = level1State[index]);
+                level2Nodes.forEach((node, index) => node.style.display = level2State[index]);
+            });
+        }
+
         document.getElementById('render-button').addEventListener('click', () => {
             const markdown = document.getElementById('input-area').value;
             const data = parseMarkdown(markdown);
             renderMindmap(data);
         });
+
+        document.getElementById('generate-png').addEventListener('click', generatePNG);
     </script>
 </body>
 </html>
