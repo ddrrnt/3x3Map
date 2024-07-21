@@ -1,18 +1,11 @@
-document.getElementById('upload').addEventListener('change', handleFileUpload);
+document.getElementById('render-button').addEventListener('click', handleMarkdownInput);
 
 let mindmapData = {};
 
-function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const markdown = e.target.result;
-            mindmapData = parseMarkdownToTree(markdown);
-            renderRootNode();
-        };
-        reader.readAsText(file);
-    }
+function handleMarkdownInput() {
+    const markdown = document.getElementById('markdown-input').value;
+    mindmapData = parseMarkdownToTree(markdown);
+    renderRootNode();
 }
 
 function parseMarkdownToTree(markdown) {
