@@ -2,6 +2,23 @@ body {
     font-family: Arial, sans-serif;
 }
 
+#markdown-input {
+    width: 80%;
+    height: 100px;
+    margin: 20px auto;
+    display: block;
+    padding: 10px;
+    font-size: 16px;
+}
+
+#render-button {
+    display: block;
+    margin: 10px auto;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
 #mindmap-container {
     display: flex;
     justify-content: center;
