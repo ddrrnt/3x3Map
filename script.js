@@ -1,81 +1,94 @@
-document.getElementById('render-button').addEventListener('click', handleMarkdownInput);
-
-let mindmapData = {};
-
-function handleMarkdownInput() {
-    const markdown = document.getElementById('markdown-input').value;
-    mindmapData = parseMarkdownToTree(markdown);
-    renderRootNode();
-}
-
-function parseMarkdownToTree(markdown) {
+function parseMarkdown(markdown) {
     const lines = markdown.split('\n');
-    const tree = { name: '', children: [] };
-    let currentParent = tree;
-    const stack = [tree];
+    const root = { content: lines[0].replace('# ', ''), children: [] };
+    let currentLevel1 = null;
 
-    lines.forEach(line => {
-        const trimmedLine = line.trim();
-        if (trimmedLine.startsWith('#')) {
-            const level = (trimmedLine.match(/#/g) || []).length;
-            const nodeName = trimmedLine.replace(/#/g, '').trim();
-            const newNode = { name: nodeName, children: [] };
-
-            if (level === 1) {
-                tree.name = nodeName;
-            } else {
-                while (stack.length >= level) {
-                    stack.pop();
-                }
-                const parent = stack[stack.length - 1];
-                parent.children.push(newNode);
-            }
-
-            stack.push(newNode);
-        } else if (trimmedLine.length > 0) {
-            const lastNode = stack[stack.length - 1];
-            const textNode = { name: trimmedLine, children: [] };
-            lastNode.children.push(textNode);
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith('## ')) {
+            currentLevel1 = { content: line.replace('## ', ''), children: [] };
+            root.children.push(currentLevel1);
+        } else if (line.startsWith('### ') && currentLevel1) {
+            currentLevel1.children.push({ content: line.replace('### ', '') });
         }
-    });
+    }
 
-    return tree;
+    return root;
 }
 
-function renderRootNode() {
+function createNode(content, level, id = '') {
+    const node = document.createElement('div');
+    node.className = `node level-${level}`;
+    node.textContent = content;
+    if (id) node.id = id;
+    return node;
+}
+
+function renderMindmap(data) {
     const container = document.getElementById('mindmap-container');
     container.innerHTML = '';
 
-    const rootNode = createNodeElement(mindmapData, 'root');
+    const rootNode = createNode(data.content, 0, 'root');
+    rootNode.classList.add('root');
     container.appendChild(rootNode);
+
+    const level2Positions = [
+        [[4, 1], [4, 2], [3, 2]],  // For level-1-1
+        [[4, 3], [4, 4], [3, 4]],  // For level-1-2
+        [[1, 4], [2, 4], [2, 3]]   // For level-1-3
+    ];
+
+    data.children.forEach((child, index) => {
+        if (index >= 3) return; // Limit to 3 level 1 nodes
+
+        const childNode = createNode(child.content, 1, `level-1-${index + 1}`);
+        container.appendChild(childNode);
+
+        child.children.forEach((grandchild, grandchildIndex) => {
+            if (grandchildIndex >= 3) return; // Limit to 3 level 2 nodes
+            const position = level2Positions[index][grandchildIndex];
+            const grandchildNode = createNode(grandchild.content, 2);
+            grandchildNode.style.gridArea = `${position[0]} / ${position[1]} / span 1 / span 1`;
+            container.appendChild(grandchildNode);
+        });
+
+        childNode.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleLevel2Nodes(index);
+        });
+    });
+
+    rootNode.addEventListener('click', toggleLevel1Nodes);
 }
 
-function createNodeElement(node, level) {
-    const nodeElement = document.createElement('div');
-    nodeElement.className = `node ${level}`;
-    nodeElement.textContent = node.name;
+function toggleLevel1Nodes() {
+    const level1Nodes = document.querySelectorAll('.level-1');
+    const level2Nodes = document.querySelectorAll('.level-2');
+    const displayStyle = level1Nodes[0].style.display === 'none' ? 'flex' : 'none';
+    
+    level1Nodes.forEach(node => node.style.display = displayStyle);
+    if (displayStyle === 'none') {
+        level2Nodes.forEach(node => node.style.display = 'none');
+    }
+}
 
-    nodeElement.addEventListener('click', function() {
-        if (node.children.length > 0) {
-            renderChildNodes(node, level);
+function toggleLevel2Nodes(index) {
+    const level2Positions = [
+        [[4, 1], [4, 2], [3, 2]],  // For level-1-1
+        [[4, 3], [4, 4], [3, 4]],  // For level-1-2
+        [[1, 4], [2, 4], [2, 3]]   // For level-1-3
+    ];
+
+    const l2Nodes = document.querySelectorAll('.level-2');
+    l2Nodes.forEach(node => {
+        if (level2Positions[index].some(pos => node.style.gridArea.startsWith(`${pos[0]} / ${pos[1]}`))) {
+            node.style.display = node.style.display === 'none' ? 'flex' : 'none';
         }
     });
-
-    return nodeElement;
 }
 
-function renderChildNodes(parentNode, parentLevel) {
-    const container = document.getElementById('mindmap-container');
-    container.innerHTML = '';
-
-    const parentNodeElement = createNodeElement(parentNode, parentLevel);
-    container.appendChild(parentNodeElement);
-
-    const levels = { 'root': 'layer1', 'layer1': 'layer2' };
-    const childLevel = levels[parentLevel];
-
-    parentNode.children.forEach(childNode => {
-        const childNodeElement = createNodeElement(childNode, childLevel);
-        container.appendChild(childNodeElement);
-    });
-}
+document.getElementById('render-button').addEventListener('click', () => {
+    const markdown = document.getElementById('input-area').value;
+    const data = parseMarkdown(markdown);
+    renderMindmap(data);
+});
